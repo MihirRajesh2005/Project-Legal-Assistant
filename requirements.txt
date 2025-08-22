@@ -1,5 +1,4 @@
 openai
-openai-agents
 pypdf2
 python-dotenv
 gradio
