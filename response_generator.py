@@ -6,7 +6,8 @@ import os, io, asyncio
 
 
 load_dotenv()
-chat_model = "gpt-5"
+chat_model = "gpt-5-nano"
+chat_client = OpenAI(api_key=os.getenv("openai_api_key"))
 
 
 system_prompt = """
@@ -61,10 +62,10 @@ def file_processor(files):
 
 
 
-prev_id = None
+history = []
 
 def model_response(message,gradio_history):
-    global prev_id
+    global history
     
     full_message = message["text"] or ""
 
@@ -72,12 +73,28 @@ def model_response(message,gradio_history):
     if file_content is not None:
         full_message = f"{full_message}\n\nUploaded file content:\n{file_content}"
     
-    law_agent = Agent(name="CaramelAI", 
-                      instructions=system_prompt, 
-                      model=chat_model,
-                      tools=[WebSearchTool(search_context_size="medium")])
-    result = asyncio.run(Runner.run(starting_agent=law_agent, input=full_message, previous_response_id=prev_id))
-    final_response = result.final_output
-    prev_id = result.last_response_id
+    if len(history)>20:
+        history = history[2:]
+    
+    inputs_for_model = []
+    if history:
+        inputs_for_model.extend(history)
+    
+    inputs_for_model.append({"role":"user", "content":full_message})
+    
+    model_response = chat_client.responses.create(
+        model=chat_model, 
+        instructions= system_prompt, 
+        input= inputs_for_model, 
+        store= False, 
+        tools=[{"type":"web_search_preview", "search_context_size":"medium"}],
+        text={"verbosity":"low"}, 
+        reasoning={"effort":"medium"}
+    )
+    final_response = model_response.output_text.strip()
+    history.extend([
+        {"role":"user", "content":full_message}, 
+        {"role":"assistant","content":final_response}
+    ])
 
     return final_response
