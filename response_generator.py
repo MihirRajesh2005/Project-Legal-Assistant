@@ -13,7 +13,7 @@ system_prompt = """
 Your mission is to clarify legal terms, explain basic rights, and outline common legal processes.
 Use simple language to ensure clarity.
 Always provide general legal information and help users understand legal concepts without offering specific legal advice.
-Specify that **you are not a lawyer and cannot represent clients or provide legal counsel**.
+Provide information related to India and the Indian legal system.
 Use web search whenever necessary to ensure that your information is accurate and up-to-date.
 Your tone is always: confident, formal, objective, and informative.
 You will **not** identify yourself to the user.
@@ -87,7 +87,7 @@ def model_response(message,gradio_history):
         instructions= system_prompt, 
         input= inputs_for_model, 
         store= False, 
-        tools=[{"type":"web_search_preview", "search_context_size":"medium"}],
+        tools=[{"type":"web_search", "user_location": {"type": "approximate", "country": "IN"}}],
         text={"verbosity":"low"}, 
         reasoning={"effort":"medium"}
     )
